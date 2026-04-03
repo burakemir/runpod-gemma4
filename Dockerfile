@@ -19,14 +19,11 @@ RUN chmod +x /start.sh
 # ----- configuration (override via RunPod template env vars) -----
 ENV MODEL_REPO="unsloth/gemma-4-31B-it-GGUF"
 ENV MODEL_FILE="gemma-4-31B-it-Q8_0.gguf"
-# Set to a multimodal-projector GGUF to enable vision (e.g. mmproj-BF16.gguf)
-ENV MMPROJ_FILE=""
 ENV N_GPU_LAYERS="999"
 ENV CTX_SIZE="8192"
 ENV LLAMA_PORT="8080"
-# Use RunPod's model cache path so the platform can pre-cache and reuse models
-# across workers.  See https://docs.runpod.io/serverless/endpoints/model-caching
-ENV HF_HUB_CACHE="/runpod-volume/huggingface-cache/hub"
+# llama.cpp's own download cache (set to a persistent path if using network volumes)
+ENV LLAMA_CACHE="/tmp/llama-cache"
 
 # Override the base image's ENTRYPOINT (which is /app/llama-server)
 ENTRYPOINT []
