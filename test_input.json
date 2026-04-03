@@ -1,0 +1,10 @@
+{
+    "input": {
+        "messages": [
+            {"role": "user", "content": "Hello! What model are you?"}
+        ],
+        "max_tokens": 256,
+        "temperature": 1.0,
+        "top_p": 0.95
+    }
+}
