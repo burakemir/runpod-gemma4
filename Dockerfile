@@ -28,4 +28,6 @@ ENV LLAMA_PORT="8080"
 # across workers.  See https://docs.runpod.io/serverless/endpoints/model-caching
 ENV HF_HUB_CACHE="/runpod-volume/huggingface-cache/hub"
 
+# Override the base image's ENTRYPOINT (which is /app/llama-server)
+ENTRYPOINT []
 CMD ["/start.sh"]
