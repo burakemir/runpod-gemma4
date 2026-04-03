@@ -14,13 +14,13 @@ LLAMA_PORT="${LLAMA_PORT:-8080}"
 # If not cached, RunPod downloads for free before starting the worker.
 # The command prints the resolved file path and is a no-op when already cached.
 echo "Resolving model ${MODEL_REPO} / ${MODEL_FILE} ..."
-MODEL_PATH=$(huggingface-cli download "$MODEL_REPO" "$MODEL_FILE")
+MODEL_PATH=$(python3 -m huggingface_hub.cli download "$MODEL_REPO" "$MODEL_FILE")
 
 # Optionally download the multimodal projector
 MMPROJ_ARGS=()
 if [ -n "$MMPROJ_FILE" ]; then
     echo "Resolving mmproj: ${MMPROJ_FILE} ..."
-    MMPROJ_PATH=$(huggingface-cli download "$MODEL_REPO" "$MMPROJ_FILE")
+    MMPROJ_PATH=$(python3 -m huggingface_hub.cli download "$MODEL_REPO" "$MMPROJ_FILE")
     MMPROJ_ARGS=(--mmproj "$MMPROJ_PATH")
 fi
 
