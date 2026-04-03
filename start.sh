@@ -36,6 +36,9 @@ llama-server \
     --n-gpu-layers "$N_GPU_LAYERS" \
     --ctx-size "$CTX_SIZE" \
     --flash-attn \
+    --temp 1.0 \
+    --top-p 0.95 \
+    --top-k 64 \
     &
 
 SERVER_PID=$!

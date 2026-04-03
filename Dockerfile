@@ -17,6 +17,7 @@ RUN git clone --depth 1 --branch ${LLAMA_CPP_TAG} \
         https://github.com/ggml-org/llama.cpp.git
 
 WORKDIR /build/llama.cpp
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
 ENV LIBRARY_PATH=/usr/local/cuda/lib64/stubs
 RUN cmake -B build \
         -DGGML_CUDA=ON \
