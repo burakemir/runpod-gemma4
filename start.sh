@@ -28,7 +28,7 @@ echo "Model:  $MODEL_PATH"
 echo "Layers: $N_GPU_LAYERS  CTX: $CTX_SIZE  Port: $LLAMA_PORT"
 
 # ---- start llama-server ----
-llama-server \
+/app/llama-server \
     --model "$MODEL_PATH" \
     "${MMPROJ_ARGS[@]}" \
     --host 0.0.0.0 \

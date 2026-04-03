@@ -1,46 +1,16 @@
 # syntax=docker/dockerfile:1
 #
 # RunPod worker serving Gemma-4-31B-it via llama.cpp
-# Build llama.cpp from a pinned tag so upgrades are explicit.
+# Based on the official llama.cpp CUDA server image.
 
-# ---- build stage ----
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS builder
-
-ARG LLAMA_CPP_TAG=b8648
+FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git cmake build-essential && \
+    apt-get install -y --no-install-recommends python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
-
-WORKDIR /build
-RUN git clone --depth 1 --branch ${LLAMA_CPP_TAG} \
-        https://github.com/ggml-org/llama.cpp.git
-
-WORKDIR /build/llama.cpp
-RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
-ENV LIBRARY_PATH=/usr/local/cuda/lib64/stubs
-RUN cmake -B build \
-        -DGGML_CUDA=ON \
-        -DCMAKE_CUDA_ARCHITECTURES="80;86;89;90" \
-        -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build --config Release -j$(nproc) \
-        --target llama-server llama-cli
-
-# ---- runtime stage ----
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
-
-# cuBLAS + cuBLASLt are needed by the CUDA backend at runtime
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        libcublas-12-4 \
-        python3 python3-pip curl && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /build/llama.cpp/build/bin/llama-server /usr/local/bin/
-COPY --from=builder /build/llama.cpp/build/bin/llama-cli    /usr/local/bin/
 
 COPY requirements.txt /requirements.txt
-RUN pip3 install --no-cache-dir -r /requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r /requirements.txt
 
 COPY handler.py /handler.py
 COPY start.sh   /start.sh

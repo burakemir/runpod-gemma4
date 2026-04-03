@@ -4,9 +4,10 @@ RunPod serverless worker that serves **Gemma-4-31B-it** (Q8_0, 8-bit GGUF from
 [Unsloth](https://huggingface.co/unsloth/gemma-4-31B-it-GGUF)) via
 [llama.cpp](https://github.com/ggml-org/llama.cpp).
 
-The container builds llama.cpp from source at a pinned release tag (`b8648`) so
-version upgrades are explicit. At runtime it starts `llama-server` with an
-OpenAI-compatible API and fronts it with a thin RunPod handler.
+Based on the official
+[`ghcr.io/ggml-org/llama.cpp:server-cuda`](https://github.com/ggml-org/llama.cpp/pkgs/container/llama.cpp)
+image. At runtime it starts `llama-server` with an OpenAI-compatible API and
+fronts it with a thin RunPod handler.
 
 ## How it works
 
@@ -81,14 +82,6 @@ Change `MODEL_FILE` to any file in the
 - `gemma-4-31B-it-Q6_K.gguf` — 6-bit, ~25 GB
 - `gemma-4-31B-it-UD-Q4_K_XL.gguf` — Unsloth Dynamic 4-bit
 
-### Upgrading llama.cpp
-
-Edit the `LLAMA_CPP_TAG` build arg in the Dockerfile:
-
-```dockerfile
-ARG LLAMA_CPP_TAG=b8648   # ← change to newer tag
-```
-
 ## Usage
 
 Send an OpenAI-compatible chat completion request as the job input:
@@ -134,10 +127,10 @@ curl -X POST "https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/runsync" \
 
 ## Files
 
-| File               | Purpose                                            |
-| ------------------ | -------------------------------------------------- |
-| `Dockerfile`       | Multi-stage build: compiles llama.cpp, slim runtime |
-| `start.sh`         | Downloads model, starts llama-server, then handler  |
-| `handler.py`       | RunPod handler — proxies requests to llama-server   |
-| `requirements.txt` | Python dependencies                                 |
-| `test_input.json`  | Sample input for local testing                      |
+| File               | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `Dockerfile`       | Layers Python + handler on official llama.cpp CUDA image   |
+| `start.sh`         | Downloads model, starts llama-server, then handler         |
+| `handler.py`       | RunPod handler — proxies requests to llama-server          |
+| `requirements.txt` | Python dependencies                                        |
+| `test_input.json`  | Sample input for local testing                             |
