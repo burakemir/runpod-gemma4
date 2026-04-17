@@ -16,10 +16,51 @@ fi
 mkdir -p "$LLAMA_CACHE"
 
 # Check whether RunPod's model caching already placed the GGUF on disk.
-# The HF cache layout is: models--<org>--<repo>/snapshots/<hash>/<file>
-HF_CACHE="/runpod-volume/huggingface-cache/hub"
-REPO_DASHED="$(echo "$MODEL_REPO" | tr '/' '--')"
-PRECACHED=$(find "${HF_CACHE}/models--${REPO_DASHED}" -name "$MODEL_FILE" -type f 2>/dev/null | head -1)
+# RunPod's cache follows HF layout:
+#   /runpod-volume/huggingface-cache/hub/models--<org>--<name>/snapshots/<hash>/<file>
+# The org/name in the path uses whatever casing the RunPod Model field has
+# (typically lowercase), which may differ from MODEL_REPO.  We try both
+# the original casing and lowercase.
+resolve_snapshot() {
+    local hf_cache="/runpod-volume/huggingface-cache/hub"
+    local repo="$1"
+    local org name model_root snapshots_dir hash candidate
+    org="${repo%%/*}"
+    name="${repo#*/}"
+    model_root="${hf_cache}/models--${org}--${name}"
+    snapshots_dir="${model_root}/snapshots"
+    # Try refs/main first
+    if [ -f "${model_root}/refs/main" ]; then
+        hash=$(cat "${model_root}/refs/main" | tr -d '[:space:]')
+        candidate="${snapshots_dir}/${hash}"
+        if [ -d "$candidate" ]; then
+            echo "$candidate"
+            return 0
+        fi
+    fi
+    # Fall back to first snapshot directory
+    if [ -d "$snapshots_dir" ]; then
+        candidate=$(ls -1d "${snapshots_dir}"/*/ 2>/dev/null | head -1)
+        if [ -n "$candidate" ]; then
+            echo "${candidate%/}"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+PRECACHED=""
+# Try original casing from MODEL_REPO
+SNAPSHOT_DIR=$(resolve_snapshot "$MODEL_REPO" 2>/dev/null) || true
+# Try lowercase if that didn't work
+if [ -z "$SNAPSHOT_DIR" ]; then
+    REPO_LOWER=$(echo "$MODEL_REPO" | tr '[:upper:]' '[:lower:]')
+    SNAPSHOT_DIR=$(resolve_snapshot "$REPO_LOWER" 2>/dev/null) || true
+fi
+# Look for the model file in the snapshot
+if [ -n "$SNAPSHOT_DIR" ] && [ -f "${SNAPSHOT_DIR}/${MODEL_FILE}" ]; then
+    PRECACHED="${SNAPSHOT_DIR}/${MODEL_FILE}"
+fi
 
 if [ -n "$PRECACHED" ]; then
     echo "Found RunPod pre-cached model: $PRECACHED"
